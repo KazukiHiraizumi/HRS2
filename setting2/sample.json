@@ -1,0 +1,12 @@
+{
+"name":"sample",
+"prm_hz":"14",
+"prm_hzuni":"hz",
+"prm_cpd":"0.5",
+"prm_mkcpd":"0.6\n-0.2\n 0.3\n-0.4",
+"prm_mkcol":"200",
+"prm_blwid":"0.1",
+"prm_tm1":"500",
+"prm_tm2":"1000",
+"prm_tm3":"1000"
+}

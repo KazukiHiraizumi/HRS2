@@ -1,0 +1,186 @@
+<html>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<head>
+<link rel="stylesheet" type="text/css" href="okn.css">
+<style type="text/css">
+#calpan button{
+	height:50px;
+	width:100%;
+}
+#calpan tr td:first-child{
+	width:33%;
+}
+#calpan tr td{
+	width:33%;
+}
+a{
+	margin-top:10px;
+}
+</style>
+<script src="jquery.js" type="text/javascript"></script>
+<script src="wsshare.js" type="text/javascript"></script>
+<script src="promise-xhr.js" type="text/javascript"></script>
+<script src="fileman.js" type="text/javascript"></script>
+</head>
+<body>
+<div style="background-image:url(pb12-002.jpg);height:60px;">
+<h3>高解像度視覚刺激システム</h3>
+<button class="bar" id="power" style="float:right;">&nbsp;Power Off&nbsp;</button>
+</div>
+
+<div id="contents">
+
+<div id="main">
+<div>設置条件</div>
+<table border>
+<tr><td>水平解像度<td><input class="shared" id="prm_resol"></input><td>pixels</tr>
+<tr><td>画面の幅<td><input class="shared" id="prm_scnwid"></input><td>mm</tr>
+<tr><td>視距離<td><input class="shared" id="prm_scndist"></input><td>mm</tr>
+<tr><td>リフレッシュレート<td><input class="shared" id="prm_fps"></input><td>fps</tr>
+<tr><td>アイトラッカーURL<td colspan="2"><input class="shared" id="prm_eturl"></input></tr>
+</table>
+<div>明るさ</div>
+<table border>
+<tr><td>背景<td><input class="shared" id="prm_bg"></input><td>0.0~1.0</tr>
+<tr><td>最大<td><input class="shared" id="prm_greyp"></input><td>0.0~1.0</tr>
+<tr><td>最小<td><input class="shared" id="prm_greyn"></input><td>0.0~1.0</tr>
+<tr><td>２値化<td><input class="shared" type="checkbox" id="prm_bin" style="width:auto;"></input><td></tr>
+<tr><td>量子化<td><input class="shared" type="checkbox" id="prm_quan" style="width:auto;"></input><td></tr>
+</table>
+<div>較正パターン<button id="swcal">&nabla;</button></div>
+<div id="calpan" style="display:none;">
+<table border style="width:100%;">
+<tr><td style="width:33%;"><button>0</button></td><td style="width:33%;"><button>0</button></td><td><button>0</button></td></tr>
+<tr><td style="width:33%;"><button>0</button></td><td style="width:33%;"><button>0</button></td><td><button>0</button></td></tr>
+<tr><td style="width:33%;"><button>0</button></td><td style="width:33%;"><button>0</button></td><td><button>0</button></tr>
+</table>
+</div>
+<table border id="calset">
+<tr><td>点の大きさ<td><input class="shared" id="prm_calcpd"></input><td>deg</tr>
+<tr><td>点の明るさ<td><input class="shared" id="prm_calcol"></input><td>0.0~1.0</tr>
+<tr><td>左右角<td><input class="shared" id="prm_caldx"></input><td>deg</tr>
+<tr><td>上下角<td><input class="shared" id="prm_caldy"></input><td>deg</tr>
+</table>
+</div>
+
+<div id="side_left">
+<a class="bar" href="panel1.html">プログラム１</a><br>
+<a class="bar" href="panel2.html">プログラム２</a><br>
+<a class="bar" href="panel3.html">プログラム３</a><br>
+<br clear="all">
+<div style="height:40px;"></div> 
+<button id="clear">画面クリア</button>
+</div>
+
+</div>
+
+<script type="text/javascript">
+var ws;  //CA service
+var fm;  //File manager
+var param={
+	'prm_resol':1024,
+	'prm_fps':60,
+	'prm_bg':0,
+	'prm_scnwid':999,
+	'prm_scndist':999,
+	'prm_greyp':255,
+	'prm_greyn':0,
+	'prm_bin':false,
+	'prm_quan':false,
+	'prm_calcpd':0,
+	'prm_calcol':100,
+	'prm_caldx':10,
+	'prm_caldy':10,
+	'prm_url':'localhost:3000',
+};
+
+$(document).ready(function(){
+	ws=new WsShare("ws://"+location.hostname+":5000",function(ws1){
+		Object.assign(ws1,param);
+		fm=new FileMan(ws1);
+		fm.json_load('oknrc',function(data){
+			console.log('load oknrc:'+data);
+			ws1.send(data);
+			ws1.set(data);
+			fm.reflect(data);
+		},function(){
+			console.log('load defaut');
+			ws1.send(param);
+			fm.reflect(param);
+		});
+		ws.send({'srv_abort':true});
+	});
+
+	$('.shared').change(function(e){
+		var target=$(e.target);
+		var id=target.attr('id');
+		var sv={};
+		if(target.attr('type')=='checkbox') sv[id]=target.prop('checked');
+		else sv[id]=target.val();
+		ws.send(sv);
+		fm.json_save('oknrc',fm.collect(ws),function(msg){
+			console.log('save:'+msg);
+		});
+	});
+	$('.queue').click(function(e){
+		var target=$(e.target);
+		var sv={};
+		sv[target.attr('id')]="click";
+		ws.send(sv);
+	});
+	var power_busy=false;
+	$('#power').click(function(){
+//		et.send({'shell':'shutdown -h now'});
+		if(power_busy) return;
+		XHRget('poweroff.sh').then(function(){
+			power_busy=true;
+			setTimeout(function(){ power_busy=false;},10000);
+			console.log("power down");
+		}, function(error) {
+			console.log("failed to power down");
+		});
+	});
+	$('#clear').click(function(e){
+		$('#calpan button').empty();
+		$('#calpan button').html('0');
+		ws.send({'srv_clear':true});
+	});
+	$('#cmd_conn').click(function(){
+		ws.send({'srv_dgram':9001});
+	});
+	$('#swcal').click(function(e){
+		if($('#swcal').html()=='X'){
+			$('#swcal').html('&nabla;');
+			$('#calpan').css({'display':'none'});
+			ws.send({'srv_clear':true});
+		}
+		else{
+			$('#swcal').html('X');
+			$('#calpan button').empty();
+			$('#calpan button').html('0');
+			$('#calpan').css({'display':'block'});
+		}
+	});
+	$('#calpan button').click(function(e){
+		var target=$(e.target);
+		var sv={};
+		var nth=$('#calpan button').index(target);
+		sv['srv_runCalib']=nth;
+		$('#calpan button').empty();
+		$('#calpan button').html('0');
+		target.html('1');
+		ws.send(sv);
+		console.log('click:'+nth);
+	});
+//	window.onbeforeunload=function(){
+//		fm.json_save('oknrc',fm.collect(ws),function(msg){
+//			console.log('save:'+msg);
+//		});
+//	}
+});
+
+
+
+</script>
+</body>
+</html>

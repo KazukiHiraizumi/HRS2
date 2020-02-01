@@ -1,0 +1,34 @@
+s/高解像度視覚刺激システム/High Resolution Stimulator/g
+s/プログラム１/Program1/g
+s/プログラム２/Program2/g
+s/プログラム３/Program3/g
+s/検査条件/Test condition/g
+s/設置条件/Installation/g
+s/水平解像度/Horizontal pixels/g
+s/画面の幅/Screen Width/g
+s/視距離/Screen Distance/g
+s/リフレッシュレート/Reflesh Rate/g
+s/アイトラッカーURL/Eye Tracker URL/g
+s/２値化/Binarize/g
+s/量子化/Quantize/g
+s/較正パターン/Calibration/g
+s/点の大きさ/Marker Size/g
+s/点の明るさ/Marker Brightness/g
+s/画面クリア/Clear Screen/g
+s/時間周波数/Temporal Frequency/g
+s/空間周波数/Spatial Frequency/g
+s/注視点の直径/Fixation Point Diameter/g
+s/注視点の明るさ/Fixation Point Brightness/g
+s/移動量/Phase Shifting/g
+s/開く/Load/g
+s/保存する/Save/g
+s/削除する/Remove/g
+s/現在値/Current Value/g
+s/スタート/Start/g
+s/ストップ/Stop/g
+s/ホーム/Home/g
+s/明るさ/Brightness/g
+s/背景/Background/g
+s/最大/Maximum/g
+s/最小/Minimum/g
+s/行/Line/g

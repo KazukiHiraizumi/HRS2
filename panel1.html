@@ -1,0 +1,146 @@
+<html>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta charset="utf-8">
+<head>
+<link rel="stylesheet" type="text/css" href="okn.css">
+<style type="text/css" >
+.ind_busy{
+	width:22%;
+}
+</style>
+<script src="jquery.js" type="text/javascript"></script>
+<script src="wsshare.js" type="text/javascript"></script>
+<script src="promise-xhr.js" type="text/javascript"></script>
+<script src="fileman.js" type="text/javascript"></script>
+</head>
+<body>
+<div style="background-image:url(pb12-002.jpg);height:60px;">
+<h3>プログラム１</h3>
+<a class="bar" href="home.html">ホーム</a><br>
+</div>
+<div id="contents">
+
+<div id="main">
+<table border>
+<tr><td>検査条件<td colspan="2"><input type="text" id="name" style="border:0;background-color:beige" readonly></input></tr>
+<tr><td>時間周波数<td><input class="shared" id="prm_hz"></input>
+<td><input type="radio" name="hzuni" value="hz" style="width:10;">Hz</input><br>
+<input type="radio" name="hzuni" value="deg" style="width:10;">deg/s</input>
+<input type="hidden" id="prm_hzuni"></input></tr>
+<tr><td>空間周波数<td><textarea class="shared" cols="12" rows="12" id="prm_cpd"></textarea><td>cpd</tr>
+<tr><td>注視点の直径<td><input class="shared" id="prm_mkcpd"></input><td>deg</tr>
+<tr><td>注視点の明るさ<td><input class="shared" id="prm_mkcol"></input><td>0.0~1.0</tr>
+<tr><td>T<sub>1</sub><td><input class="shared" id="prm_tm1"></input><td>msec</tr>
+<tr><td>T<sub>2</sub><td><input class="shared" id="prm_tm2"></input><td>msec</tr>
+<tr><td>T<sub>3</sub><td><input class="shared" id="prm_tm3"></input><td>msec</tr>
+</table>
+</div>
+
+<div id="side_left">
+検査条件
+<div class="dropdown">
+<div><button id="FMload"></button>開く</div>
+<div id="FMload_pm"></div>
+<div><button id="FMsave"></button>保存する</div>
+<div id="FMsave_pm"></div>
+<div><button id="FMremove"></button>削除する</div>
+<div id="FMremove_pm"></div>
+</div>
+<hr>
+<hr>
+<div>現在値<br>
+<input id="stat_v1" type="text" style="width:60%;background-color:beige" readonly>行</input><br>
+<input id="stat_v2" type="text" style="width:60%;background-color:beige" readonly>cpd</input><br>
+</div>
+<!--
+<table width="100%">
+<tr><td class="ind_busy" width="22%"></td><td class="ind_busy"></td><td class="ind_busy"></td><td class="ind_busy"></td></tr>
+</table>
+-->
+<button class="queue" id="srv_run1">スタート</button>
+<button class="queue" id="srv_abort">ストップ</button>
+</div>
+
+</div>
+
+<script type="text/javascript">
+var ws;  //W2W
+var fm;  //File Manager
+var stat={'run':0,'wait':0};
+
+$(document).ready(function(){
+	ws=new WsShare("ws://"+location.hostname+":5000",function(ws){
+		Object.assign(ws,{
+			'name':'no_name',
+			'prm_hz':10,
+			'prm_cpd':'1',
+			'prm_mkcpd':10,
+			'prm_mkcol':25,
+			'prm_blwid':0.1,
+			'prm_tm1':0,
+			'prm_tm2':0,
+			'prm_tm3':1000,
+			'prm_hzuni':'hz',
+		});
+		fm=new FileMan(ws);
+		fm['dir']='setting1';
+		fm['loaded']=function(){
+			console.log('loaded:'+ws.prm_hzuni);
+			$('input[name=hzuni]').val([ws.prm_hzuni]);
+		}
+		var name=localStorage.getItem(fm.dir+'name');
+		console.log('name recall:'+name);
+		fm.json_load(name,function(data){
+			ws.send(data);
+			ws.set(data);
+			fm.reflect(data);
+		});
+		ws.send({'srv_abort':true});
+		ws['tpc_runlevel']=function(n){
+			stat.run=n;
+			if(n>0){
+				if(stat.wait>0) $('.indicator').css({'animation-name':'steady'});
+				else $('.indicator').css({'animation-name':'halt'});
+			}
+			else $('.indicator').css({'animation-name':'none'});
+		}
+		ws['tpc_wait']=function(n){
+			stat.wait=n;
+			if(stat.run>0){
+				if(n>0) $('.indicator').css({'animation-name':'steady'});
+				else $('.indicator').css({'animation-name':'halt'});
+			}
+		}
+		ws['tpc_runcount']=function(n){ $('#stat_v1').val(n==0? '':n);}
+		ws['tpc_cpd']=function(n){ $('#stat_v2').val(n==0? '':n);}
+	});
+	$('#srv_run1').click(function(){
+		console.log('name saved:'+ws['name']);
+		localStorage.setItem(fm.dir+'name',ws['name']);
+	});
+	$('.shared').change(function(e){
+		var target=$(e.target);
+		var id=target.attr('id');
+		var sv={};
+		if(target.attr('type')=='checkbox') sv[id]=target.prop('checked');
+		else sv[id]=target.val();
+		ws.send(sv);
+	});
+	$('.queue').click(function(e){
+		var target=$(e.target);
+		var sv={};
+		sv[target.attr('id')]="click";
+		ws.send(sv);
+	});
+	$('input[name=hzuni]').click(function(){
+		var u=ws.prm_hzuni=$('input[name=hzuni]:checked').val();
+		$('#prm_hzuni').val(u);
+		ws.send({prm_hzuni:u});
+	});
+	$('.ind_busy').append('<svg class="indicator" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="7" /></svg>');
+});
+
+
+</script>
+</body>
+</html>
