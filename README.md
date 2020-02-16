@@ -1,65 +1,79 @@
 # 高解像度視覚刺激システム
-## 準備
-### OpenGL
-- glfwインストール
+
+## Windowsの場合
+### インストール
+1. WSL  
+設定→アプリから「WSL」を有効にする
+2. GL-Server  
+https://github.com/KazukiHiraizumi/GL-Server をビルドする。
+
+### WSLのセットアップ
+1. Nodejs
 ~~~
-apt-get install libglfw3 libglfw3-dev
+sudo apt update
+sudo apt install nodejs
+~~~
+バージョン確認
+~~~
+node -v
+~~~
+ver8以上ならOK
+
+2. npmのインストール
+~~~
+sudo apt update
+sudo apt install npm
+~~~
+以下パッケージを追加
+~~~
+npm install ws performance-now dgram
 ~~~
 
-### GL-Console(https://github.com/KazukiHiraizumi/GL-Console)
-- インストール方法
+3. HRS2  
 ~~~
-git clone https://github.com/KazukiHiraizumi/GL-Console
-cd GL-Console
-make kio
-sudo make install
+git clone https://github.com/KazukiHiraizumi/HRS2.git
 ~~~
 
-### Httpd "Lighttpd"
-- インストール方法
+4. httpd
 ~~~
 sudo apt-get install lighttpd
 ~~~
-
-- "/etc/lighttpd/lighttpd.conf"に以下を加える
+"/etc/lighttpd/lighttpd.conf" を以下のように編集
 ~~~
    server.modules += (
       "mod_cgi"
    )
    cgi.assign = ( ".sh"  => "/bin/bash" )
-~~~
-- ページのホームを指定
-~~~
-ln -fs /home/<your accont>/HRS /var/www/html
-~~~
-- 自動起動に設定
-~~~
-sudo systemctl start lighttpd.service
+   server.document-root = "/home/ca/HRS2"
 ~~~
 
-### Node.js
-- インストール方法
+5. sudoer編集
 ~~~
-curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
-sudo apt-get install nodejs
-sudo apt-get install npm
+sudo visudo
 ~~~
-- パッケージ追加
-npm -g install ws performance-now dgram
+以下を追加
+~~~
+<username> ALL=NOPASSWD: ALL
+~~~
+~Xにて終了
 
-### その他ツール
-- unclutter マウスカーソルを消す
+6. .bashrc編集  
+以下を追加
 ~~~
-sudo apt-get install unclutter
+dn=$(ps ax | grep lighttpd | wc -l)
+if (( dn==1 ))
+then
+  sudo lighttpd -f /etc/lighttpd/lighttpd.conf
+fi
+cd HRS2
+node cav8.jss
 ~~~
 
-## セットアップ
-- セッションマネージャに "start.sh" を登録
-- 表示言語の選択
+7. 表示言語の選択
 ~~~
-  cd HRS
-  ./jp.sh  //Japanese
-  ./en.sh  //English
+cd HRS2
+./jp.sh  //Japanese
+./en.sh  //English
 ~~~
 ## 操作
 ~~~
