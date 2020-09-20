@@ -1,5 +1,5 @@
 body{
-	width:350px;
+	width:100%;
 	background-color:beige;
 }
 body h3:first-child{
@@ -7,9 +7,7 @@ body h3:first-child{
 }
 iframe{
 	margin:0;
-	width:90%;
-	height:400px;
-	margin-right:5%;
+	width:100%;
 }
 .bar{
 	float:left;
@@ -17,8 +15,13 @@ iframe{
 	padding-right:10px;
 	cursor:pointer;
 }
-#contents{
+
+#panel{
 	width:100%;
+	border: solid 1px red";
+}
+#contents{
+	width:33%;
 	float:left;
 	margin:0;
 	margin-top:10px;
@@ -84,8 +87,14 @@ iframe{
 #side_right{
 	width:30%;
 	float:right;
-	margin:3% 0;
+	margin:30%;
 	margin-left:-100%;
+}
+
+#frame{
+	float:right;
+	width:60%;
+	margin:0;
 }
 
 .indicator {

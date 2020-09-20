@@ -1,0 +1,111 @@
+<html>
+
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+<meta charset="utf-8" />
+<link href="c3/c3.css" rel="stylesheet" />
+<script src="jquery.js" type="text/javascript"></script>
+<script src="d3/d3.min.js"></script>
+<script src="c3/c3.min.js"></script>
+</head>
+
+<body>
+<table style="align:center;">
+  <tr><th>Left</th><td><div id="statL">●</div></td><th>Right</th><td><div id="statR">●</div></td><td width="50%"></td><td><button id="clear">Clear</button></td></tr>
+</table>
+<hr>
+<div></div>
+
+<script>
+$('#clear').click(function(){
+  console.log("clear");
+  $('div').remove();
+  $('hr').after('</div><div>');
+});
+
+const sock1=new WebSocket('ws://127.0.0.1:5001');
+sock1.onopen=function(){
+  console.log(arguments.length+'/Status server connect OK');
+}
+sock1.onmessage=function(event){
+  console.log("sock1 "+event.data);
+  let stat;
+  try{
+    stat=JSON.parse(event.data);
+  }
+  catch(e){
+    $('#statL').css('color','black');
+    $('#statR').css('color','black');
+    return;
+  }
+  if(stat.left>0) $('#statL').css('color','blue');
+  else $('#statL').css('color','black');
+  if(stat.right>0) $('#statR').css('color','orange');
+  else $('#statR').css('color','black');
+}
+sock1.onerror=function(){
+  console.log('Wsock1 Error!');
+}
+sock1.onclose=function(){
+  console.log('Wsock1 Connection Close!');
+}
+
+const sock2=new WebSocket('ws://127.0.0.1:5002');
+sock2.onopen=function(){
+  console.log(arguments.length+'//Data server connect OK');
+}
+sock2.onmessage=function(event){
+  let data=JSON.parse(event.data);
+  let id=Math.floor(Math.random()*1000000);
+  $('div:last').after('<div id="chart'+id+'" style="width:100%; border: solid 1px red">Graph data</div>');
+  let aveL=0,aveR=0;
+  for(let i=0;i<data.time.length;i++){
+    if(data.time[i]>data.tm1){
+      aveL/=i;
+      aveR/=i;
+      break;
+    }
+    aveL+=data.left[i];
+    aveR+=data.right[i];
+  }
+  console.log("average "+aveL+" "+aveR);
+  for(let i=0;i<data.time.length;i++){
+    data.left[i]-=aveL;
+    data.left[i]-=aveR;
+  }
+  let chart = c3.generate({
+    bindto: '#chart'+id,
+    size: { width: 1000, height: 100 },
+    data: {
+      x:'Time',
+      columns: [
+        ['Time'].concat(data.time),
+        ['Left'].concat(data.left),
+        ['Right'].concat(data.right)
+      ],
+    },
+    point: {
+      show: false
+    },
+    legend: {
+      show: true,
+      position: 'inset',
+      inset: {
+        anchor: 'top-right',
+        x: 0,
+        y: 0,
+        step: 5
+      }
+    }
+  });
+}
+sock2.onerror=function(){
+  console.log('Wsock2 Error!');
+}
+sock2.onclose=function(){
+  console.log('Wsock2 Connection Close!');
+}
+</script>
+
+</body>
+</html>

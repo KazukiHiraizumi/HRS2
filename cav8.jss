@@ -123,7 +123,8 @@ const gl_connect=function(){
   		break;
   	}
   	if(pub.tpc_ext==null) return;
-  	let str=Buffer.from([pub.tpc_ext>>24,pub.tpc_ext>>16,pub.tpc_ext>>8,pub.tpc_ext]);
+//  	let str=Buffer.from([pub.tpc_ext>>24,pub.tpc_ext>>16,pub.tpc_ext>>8,pub.tpc_ext]);
+  	let str=Buffer.from(JSON.stringify(pub.tpc_ext));
   	let len=str.length;
   	let dn=ws.prm_eturl.split(':');
 	  let url=dn[0];

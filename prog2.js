@@ -62,11 +62,12 @@ function run(){
 		if(pub.tpc_wait>0) setTimeout(run,pub.tpc_wait);
 		ws.notif(pub);
 		pub.tpc_runlevel=2;
+		pub.tpc_ext={'tm1':ws.prm_tm1,'tm2':ws.prm_tm2};  //UDP
 		return;
 //the 2nd and following frames
 	case 2:
 		pub.tpc_diag=1; //start GL process diagnostic
-		pub.tpc_ext=6000+pub.tpc_runcount;  //UDP
+//		pub.tpc_ext={'trigger':1};  //UDP
 		var tp=pnow()+Number(ws.prm_tm2);
 		for(var f=Math.floor(ws.prm_tm2*ws.prm_fps/1000);f>0;f--){
 			pub.tpc_phase+=pub.tpc_dph;

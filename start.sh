@@ -1,5 +1,5 @@
 #!/bin/bash
 
-unclutter -idle 3 &
-cd /var/www/html ; NODE_PATH=/usr/lib/node_modules node cav8.njs &
-
+echo $HOME
+cd $HOME/HRS2
+node cav8.jss

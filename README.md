@@ -29,12 +29,16 @@ sudo apt install npm
 npm install ws performance-now dgram
 ~~~
 
-3. HRS2  
+3. Front end  
+C3.js D3.jsが必要。  
+D3.jsはV6はダメなので注意(V5.16.0を推奨)
+
+4. HRS2  
 ~~~
 git clone https://github.com/KazukiHiraizumi/HRS2.git
 ~~~
 
-4. httpd
+5. httpd
 ~~~
 sudo apt-get install lighttpd
 ~~~
@@ -46,8 +50,16 @@ sudo apt-get install lighttpd
    cgi.assign = ( ".sh"  => "/bin/bash" )
    server.document-root = "/home/ca/HRS2"
 ~~~
+serviceを登録
+~~~
+sudo cp /usr/lib/systemd/system/lighttpd.service /var/run/
+~~~
+これにてserviceで起動できるので後述のWinの**wsl**コマンドで起動する
+~~~
+service lighttpd start
+~~~
 
-5. sudoer編集
+6. sudoのパスワード省略
 ~~~
 sudo visudo
 ~~~
@@ -55,21 +67,23 @@ sudo visudo
 ~~~
 <username> ALL=NOPASSWD: ALL
 ~~~
-~Xにて終了
 
-6. .bashrc編集  
-以下を追加
+7. Windowsから起動  
+start.shを/usr/local/binへコピー
 ~~~
-dn=$(ps ax | grep lighttpd | wc -l)
-if (( dn==1 ))
-then
-  sudo lighttpd -f /etc/lighttpd/lighttpd.conf
-fi
-cd HRS2
-node cav8.jss
+sudo cp start.sh /usr/local/bin
+~~~
+以下の.batファイルにて一括起動します
+~~~
+@powershell -NoProfile -ExecutionPolicy Unrestricted "$s=[scriptblock]::create((gc \"%~f0\"|?{$_.readcount -gt 1})-join\"`n\");&$s" %*&goto:eof
+
+Start-Process "C:\Users\user\source\repos\KazukiHiraizumi\GL-Server\x64\Debug\GL-Server.exe"
+Start-Process python '\\wsl$\Ubuntu\home\ca\HRS2\TobiiStudy\TobiiStudy.py'
+wsl -u root -- service lighttpd start
+wsl -u ca -e start.sh
 ~~~
 
-7. 表示言語の選択
+8. 表示言語の選択
 ~~~
 cd HRS2
 ./jp.sh  //Japanese
@@ -77,7 +91,7 @@ cd HRS2
 ~~~
 ## 操作
 ~~~
-1. ブラウザーにてJETSONのアドレスの"home.html"を開く
+1. ブラウザーにて"localost/home.html"を開く
 ~~~
 
 ## ファイルの説明
