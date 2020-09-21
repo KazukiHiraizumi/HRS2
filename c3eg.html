@@ -11,7 +11,7 @@
 
 <body>
 <table style="align:center;">
-  <tr><th>Left</th><td><div id="statL">●</div></td><th>Right</th><td><div id="statR">●</div></td><td width="50%"></td><td><button id="clear">Clear</button></td></tr>
+  <tr><th>Left</th><td><div id="statL" color='blue'></div></td><th>Right</th><td><div id="statR" color='orange'></div></td><td width="50%"></td><td><button id="clear">Clear</button></td></tr>
 </table>
 <hr>
 <div></div>
@@ -38,10 +38,10 @@ sock1.onmessage=function(event){
     $('#statR').css('color','black');
     return;
   }
-  if(stat.left>0) $('#statL').css('color','blue');
-  else $('#statL').css('color','black');
-  if(stat.right>0) $('#statR').css('color','orange');
-  else $('#statR').css('color','black');
+  if(stat.left>0) $('#statL').text('●').css('color','blue');
+  else $('#statL').text('―');
+  if(stat.right>0) $('#statR').text('●').css('color','orange');
+  else $('#statR').text('―');
 }
 sock1.onerror=function(){
   console.log('Wsock1 Error!');

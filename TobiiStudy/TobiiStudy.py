@@ -6,7 +6,15 @@ import threading
 import time
 import re
 import numpy as np
+import random
 import tobii_research as tr
+
+#Tobii EyeTracker globals
+eyetracker = None
+gaze_data = []
+gaze_cmd = {}
+gaze_now = None
+gaze_strobe = 0
 
 #5001 ET status server
 sock1=WebsocketServer(5001, host="localhost")
@@ -24,17 +32,22 @@ def sock1_on_received(client, server, message):
   print("sock1 received:"+message)
 def sock1_start():
   if client1:
-    sock1.send_message(client1,'{"left":1,"right":1}')
+    stat={"connect":0,"left":0,"right":0}
+    if gaze_now is not None:
+      stat["connect"]=1
+      stat["left"]=gaze_now["left_gaze_point_validity"]
+      stat["right"]=gaze_now["right_gaze_point_validity"]
+    res=re.sub("'",'"',str(stat))
+    sock1.send_message(client1,res)
     t1=threading.Timer(0.1,sock1_start)
     t1.start()
   else:
-    print('No client')
     t1=threading.Timer(1,sock1_start)
     t1.start()
 sock1.set_fn_new_client(sock1_on_connect)
 sock1.set_fn_client_left(sock1_on_disconnect)
 sock1.set_fn_message_received(sock1_on_received)
-#sock1_start()
+sock1_start()
 
 #5002 ET data server
 sock2=WebsocketServer(5002, host="localhost")
@@ -61,44 +74,39 @@ thread2 = threading.Thread(target=sock2.run_forever)
 thread2.start()
 
 #Tobii EyeTracker
-eyetracker = None
-gaze_data = []
-gaze_cmd = {}
 def gaze_callback(data):
-  global gaze_data
-  gaze_data.append(data)
+  global gaze_now,gaze_data
+  gaze_now=data
+  if gaze_strobe>0: gaze_data.append(data)
+
+def dummy_callback():
+  global gaze_now,gaze_data
+  t=time.time()-gaze_strobe
+  tc=t*10
+  data={
+    "time":t,
+    "left_gaze_point_validity":int(random.random()>0.1),
+    "left_gaze_point_on_display_area":(np.sin(tc),0),
+    "right_gaze_point_validity":int(random.random()>0.1),
+    "right_gaze_point_on_display_area":(np.cos(tc),0)}
+  gaze_now=data
+  if gaze_strobe>0: gaze_data.append(data)
+  t1=threading.Timer(0.01,dummy_callback)
+  t1.start()
 
 def gaze_sample(cmd):
-  global gaze_data
+  global gaze_data,gaze_strobe
   gaze_data=[]
-  print("Subscribing to gaze data for eye tracker with serial number {0}.".format(eyetracker.serial_number))
-  eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, gaze_callback, as_dictionary=True)
-  print("Start sampling "+str(cmd['tm1']))
+  gaze_strobe=time.time()
   time.sleep(cmd["tm1"]+cmd["tm2"])
-  print("Stop  sampling")
-  eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_callback)
-
-def dummy_sample(cmd):
-  global gaze_data
-  gaze_data=[]
-  tb=int(time.time())
-  while True:
-    t=time.time()-cmd["t0"]
-    if t>cmd["t1"]: break
-    tc=time.time()-tb
-    data={
-      "time":t,
-      "left_gaze_point_validity":1,
-      "left_gaze_point_on_display_area":np.sin(tc*9),
-      "right_gaze_point_validity":1,
-      "right_gaze_point_on_display_area":np.cos(tc*11)}
-    gaze_data.append(data)
-    time.sleep(0.01)
+  gaze_strobe=0
 
 #etrs=tr.find_all_eyetrackers()
 #for et in etrs:
 #  print(et.address)
 #eyetracker = tr.EyeTracker(etrs[0].address)
+#eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, gaze_callback, as_dictionary=True)  #eyetracker start streaming
+dummy_callback()
 
 #Trigger
 sock0=socket(AF_INET, SOCK_DGRAM)
@@ -109,15 +117,14 @@ def sock0_on_received(msg):
   for k in val: gaze_cmd[k]=float(val[k])*0.001
   gaze_cmd["t0"]=time.time()
   gaze_cmd["t1"]=gaze_cmd["tm1"]+gaze_cmd["tm2"]
-#  gaze_sample(gaze_cmd)
-  dummy_sample(gaze_cmd)
+  gaze_sample(gaze_cmd)
   print("Start broadcast "+str(time.time()))
   result={"time":[],"left":[],"right":[]}
   for d in gaze_data:
     if d["left_gaze_point_validity"]>0 and d["right_gaze_point_validity"]>0:
       result["time"].append(d["time"])
-      result["left"].append(d["left_gaze_point_on_display_area"])
-      result["right"].append(d["right_gaze_point_on_display_area"])
+      result["left"].append(d["left_gaze_point_on_display_area"][0])
+      result["right"].append(d["right_gaze_point_on_display_area"][0])
   result["tm1"]=gaze_cmd["tm1"]
   result["tm2"]=gaze_cmd["tm2"]
   res=re.sub("'",'"',str(result))
@@ -129,3 +136,6 @@ while True:
 
 thread1.join()
 thread2.join()
+
+eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_callback)
+
