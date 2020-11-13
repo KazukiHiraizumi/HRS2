@@ -4,12 +4,14 @@ from socket import socket, AF_INET, SOCK_DGRAM
 from websocket_server import WebsocketServer
 import threading
 import time
+import os
 import re
 import numpy as np
 import random
 import tobii_research as tr
 
 #Tobii EyeTracker globals
+sequence = 1
 eyetracker = None
 gaze_data = []
 gaze_cmd = {}
@@ -112,14 +114,14 @@ dummy_callback()
 sock0=socket(AF_INET, SOCK_DGRAM)
 sock0.bind(('',5000)) #5000 UDP socket for trigger
 def sock0_on_received(msg):
-  global gaze_cmd
+  global sequence,gaze_cmd
   val=eval(msg)
   for k in val: gaze_cmd[k]=float(val[k])*0.001
   gaze_cmd["t0"]=time.time()
   gaze_cmd["t1"]=gaze_cmd["tm1"]+gaze_cmd["tm2"]
   gaze_sample(gaze_cmd)
   print("Start broadcast "+str(time.time()))
-  result={"time":[],"left":[],"right":[]}
+  result={"seq":sequence,"time":[],"left":[],"right":[]}
   for d in gaze_data:
     if d["left_gaze_point_validity"]>0 and d["right_gaze_point_validity"]>0:
       result["time"].append(d["time"])
@@ -129,6 +131,17 @@ def sock0_on_received(msg):
   result["tm2"]=gaze_cmd["tm2"]
   res=re.sub("'",'"',str(result))
   if client2 is not None: sock2.send_message(client2,res)
+  print("file dump "+os.getcwd())
+  f=open('dump.csv', mode='a')
+  f.write('Seq,'+str(sequence)+'\n')
+  f.write(','.join(map(str,result["time"])))
+  f.write('\n')
+  f.write(','.join(map(str,result["left"])))
+  f.write('\n')
+  f.write(','.join(map(str,result["right"])))
+  f.write('\n')
+  f.close()
+  sequence=sequence+1
 
 while True:
   msg, address = sock0.recvfrom(256)
@@ -138,4 +151,3 @@ thread1.join()
 thread2.join()
 
 eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_callback)
-
