@@ -19,8 +19,7 @@
 <script>
 $('#clear').click(function(){
   console.log("clear");
-  $('div').remove();
-  $('hr').after('</div><div>');
+  $('.chart').remove();
 });
 
 const sock1=new WebSocket('ws://127.0.0.1:5001');
@@ -28,7 +27,6 @@ sock1.onopen=function(){
   console.log(arguments.length+'/Status server connect OK');
 }
 sock1.onmessage=function(event){
-  console.log("sock1 "+event.data);
   let stat;
   try{
     stat=JSON.parse(event.data);
@@ -55,27 +53,19 @@ sock2.onopen=function(){
   console.log(arguments.length+'//Data server connect OK');
 }
 sock2.onmessage=function(event){
-  let data=JSON.parse(event.data);
-  let id=Math.floor(Math.random()*1000000);
-  $('div:last').after('<div id="chart'+id+'" style="width:100%; border: solid 1px red">Graph data</div>');
-  let aveL=0,aveR=0;
-  for(let i=0;i<data.time.length;i++){
-    if(data.time[i]>data.tm1){
-      aveL/=i;
-      aveR/=i;
-      break;
-    }
-    aveL+=data.left[i];
-    aveR+=data.right[i];
+  let data;
+  try{
+    data=JSON.parse(event.data);
   }
-  console.log("average "+aveL+" "+aveR);
-  for(let i=0;i<data.time.length;i++){
-    data.left[i]-=aveL;
-    data.left[i]-=aveR;
+  catch(e){
+    return;
   }
+//  let id=Math.floor(Math.random()*1000000);
+  let id=data.seq;
+  $('div:last').after('<div style="font-size:9pt;">#'+id+'<div id="chart'+id+'" class="chart" style="width:100%; border: solid 1px red">Graph data</div>');
   let chart = c3.generate({
     bindto: '#chart'+id,
-    size: { width: 1000, height: 100 },
+    size: { width: 700, height: 100 },
     data: {
       x:'Time',
       columns: [
@@ -83,6 +73,11 @@ sock2.onmessage=function(event){
         ['Left'].concat(data.left),
         ['Right'].concat(data.right)
       ],
+    },
+    axis: {
+      y: {
+        max: 1,min: -1
+      }
     },
     point: {
       show: false
