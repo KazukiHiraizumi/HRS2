@@ -4,8 +4,8 @@ from socket import socket, AF_INET, SOCK_DGRAM
 from websocket_server import WebsocketServer
 import threading
 import time
-import os
 import re
+import os
 import numpy as np
 import random
 import tobii_research as tr
@@ -23,7 +23,7 @@ sock1=WebsocketServer(5001, host="localhost")
 client1=None
 def sock1_on_connect(client, server):
   global client1
-  print("client({}) connected".format(client['id']))
+  print("sock1 connected")
   client1=client
   server.send_message(client,"A new client joined!")
 def sock1_on_disconnect(client, server):
@@ -41,6 +41,7 @@ def sock1_start():
       stat["right"]=gaze_now["right_gaze_point_validity"]
     res=re.sub("'",'"',str(stat))
     sock1.send_message(client1,res)
+#    print("sock1 send ",res)
     t1=threading.Timer(0.1,sock1_start)
     t1.start()
   else:
@@ -78,7 +79,10 @@ thread2.start()
 #Tobii EyeTracker
 def gaze_callback(data):
   global gaze_now,gaze_data
+  t=time.time()-gaze_strobe
+  data["time"]=t
   gaze_now=data
+#  print("time",t)
   if gaze_strobe>0: gaze_data.append(data)
 
 def dummy_callback():
@@ -100,15 +104,16 @@ def gaze_sample(cmd):
   global gaze_data,gaze_strobe
   gaze_data=[]
   gaze_strobe=time.time()
+  print("sequence:",sequence)
   time.sleep(cmd["tm1"]+cmd["tm2"])
   gaze_strobe=0
 
-#etrs=tr.find_all_eyetrackers()
-#for et in etrs:
-#  print(et.address)
-#eyetracker = tr.EyeTracker(etrs[0].address)
-#eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, gaze_callback, as_dictionary=True)  #eyetracker start streaming
-dummy_callback()
+etrs=tr.find_all_eyetrackers()
+for et in etrs:
+  print(et.address)
+eyetracker = tr.EyeTracker(etrs[0].address)
+eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, gaze_callback, as_dictionary=True)  #eyetracker start streaming
+#dummy_callback()
 
 #Trigger
 sock0=socket(AF_INET, SOCK_DGRAM)
@@ -125,8 +130,8 @@ def sock0_on_received(msg):
   for d in gaze_data:
     if d["left_gaze_point_validity"]>0 and d["right_gaze_point_validity"]>0:
       result["time"].append(d["time"])
-      result["left"].append(d["left_gaze_point_on_display_area"][0])
-      result["right"].append(d["right_gaze_point_on_display_area"][0])
+      result["left"].append((d["left_gaze_point_on_display_area"][0]-0.5)*2)
+      result["right"].append((d["right_gaze_point_on_display_area"][0]-0.5)*2)
   result["tm1"]=gaze_cmd["tm1"]
   result["tm2"]=gaze_cmd["tm2"]
   res=re.sub("'",'"',str(result))

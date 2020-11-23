@@ -61,7 +61,7 @@ sock2.onmessage=function(event){
     return;
   }
   let id=data.seq;
-  $('div:last').after('<div class="chart" style="font-size:9pt;">#'+id+'</div><div id="chart'+id+'" class="chart" style="width:100%; border: solid 1px red">Graph data</div>');
+  $('div:last').after('<div class="chart" style="font-size:9pt;">#'+id+'</div><div id="chart'+id+'" class="chart" style="width:750px; border: solid 1px red">Graph data</div>');
   let chart = c3.generate({
     bindto: '#chart'+id,
     size: { width: 700, height: 100 },
@@ -75,7 +75,7 @@ sock2.onmessage=function(event){
     },
     axis: {
       y: {
-        max: 1,min: -1
+        max: 0.9,min: -0.9
       }
     },
     point: {
