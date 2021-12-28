@@ -80,8 +80,12 @@ def gaze_callback(data):
   t=time.time()-gaze_strobe
   data["time"]=t
   gaze_now=data
+<<<<<<< HEAD
 #  if data["left_gaze_point_validity"]>0 or data["right_gaze_point_validity"]>0:
 #      print(data["left_gaze_point_on_display_area"],data["right_gaze_point_on_display_area"])
+=======
+#  print("time",t)
+>>>>>>> refs/remotes/origin/master
   if gaze_strobe>0: gaze_data.append(data)
 
 def dummy_callback():
@@ -127,7 +131,6 @@ def sock0_on_received(msg):
   print("Start broadcast "+str(time.time()))
   result={"seq":sequence,"time":[],"left":[],"right":[]}
   for d in gaze_data:
-#    if d["left_gaze_point_validity"]>0 and d["right_gaze_point_validity"]>0:
     if d["left_gaze_point_validity"]>0 or d["right_gaze_point_validity"]>0:
       result["time"].append(d["time"])
       if d["left_gaze_point_validity"]>0: result["left"].append((d["left_gaze_point_on_display_area"][0]-0.5)*2)
