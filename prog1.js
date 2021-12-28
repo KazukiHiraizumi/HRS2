@@ -54,8 +54,8 @@ function run(){
 			pub.tpc_dph=glQuantize(pub.tpc_lamda*pub.tpc_dph)/pub.tpc_lamda;
 		}
 		pub.tpc_phase=0;
-		glfw.stdin.write('W '+pub.tpc_lamda+' 0 '+ws.prm_greyp+' '+ws.prm_greyn+' '+ws.prm_bin+';');
-		glfw.stdin.write('C 0 0 '+deg2gl(ws.prm_mkcpd*0.5)+' '+ws.prm_mkcol+'\n');
+		glfw.write('W '+pub.tpc_lamda+' 0 '+ws.prm_greyp+' '+ws.prm_greyn+' '+ws.prm_bin+';');
+		glfw.write('C 0 0 '+deg2gl(ws.prm_mkcpd*0.5)+' '+ws.prm_mkcol+'\n');
 //console.log('W '+pub.tpc_lamda+' 0 '+ws.prm_greyp+' '+ws.prm_greyn+';');
 		pub.tpc_wait=ws.prm_tm1;
 		if(pub.tpc_wait>0) setTimeout(run,pub.tpc_wait);
@@ -69,7 +69,7 @@ function run(){
 		var tp=pnow()+Number(ws.prm_tm2);
 		for(var f=Math.floor(ws.prm_tm2*ws.prm_fps/1000);f>0;f--){
 			pub.tpc_phase+=pub.tpc_dph;
-			glfw.stdin.write('W '+pub.tpc_lamda+' '+pub.tpc_phase+' '+ws.prm_greyp+' '+ws.prm_greyn+' '+ws.prm_bin+'\n');
+			glfw.write('W '+pub.tpc_lamda+' '+pub.tpc_phase+' '+ws.prm_greyp+' '+ws.prm_greyn+' '+ws.prm_bin+'\n');
 		}
 		pub.tpc_wait=Math.ceil(tp-pnow());
 		if(pub.tpc_wait>0){
@@ -83,7 +83,7 @@ function run(){
 		pub.tpc_wait=ws.prm_tm3;
 		if(pub.tpc_wait>0){
 			setTimeout(run,pub.tpc_wait);
-			glfw.stdin.write('B 1 '+ws.prm_bg+'\n');
+			glfw.write('B 1 '+ws.prm_bg+'\n');
 		}
 		ws.notif(pub);
 		pub.tpc_runlevel=1;
@@ -91,7 +91,7 @@ function run(){
 	case 99: //request to terminate
 		pub.tpc_runlevel=pub.tpc_wait=0;
 		ws.notif(pub);
-		glfw.stdin.write('B 1 '+ws.prm_bg+'\n');
+		glfw.write('B 1 '+ws.prm_bg+'\n');
 		pub.tpc_runcount=pub.tpc_cpd=pub.tpc_mkcpd=pub.tpc_tm2=0;
 		busy=false;
 		return;

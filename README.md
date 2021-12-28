@@ -55,8 +55,8 @@ serviceを登録
 sudo cp /usr/lib/systemd/system/lighttpd.service /var/run/
 ~~~
 これにてserviceで起動できるので後述のWinの**wsl**コマンドで起動する
-~~~
-service lighttpd start
+
+sudo service lighttpd start
 ~~~
 
 6. sudoのパスワード省略
@@ -65,13 +65,27 @@ sudo visudo
 ~~~
 以下を追加
 ~~~
-<username> ALL=NOPASSWD: ALL
+<username> ALL=NOPASSWD: /sbin/service lighttpd start
+<username> ALL=NOPASSWD: /bin/tee -a /etc/hosts
+~~~
+teeコマンドは、resolve_hosts.sh(Winホストのアドレスを登録するコマンド)で必要です。
+
+7. Permission変更
+HRS2のOwner変更
+~~~
+sudo chown -R <user>:<group> HRS2
+~~~
+Permission変更
+~~~
+chmod 777 HRS2
+chmod 777 HRS2/setting*
+chmod 777 HRS2/html
 ~~~
 
-7. Windowsから起動  
-start.shを/usr/local/binへコピー
+8. Windowsから起動  
+start.sh resolve_hosts.shを/usr/local/binへコピー
 ~~~
-sudo cp start.sh /usr/local/bin
+sudo cp start.sh resolve_hosts.sh /usr/local/bin
 ~~~
 以下の.batファイルにて一括起動します
 ~~~
@@ -83,12 +97,31 @@ wsl -u root -- service lighttpd start
 wsl -u ca -e start.sh
 ~~~
 
-8. 表示言語の選択
+9. 表示言語の選択
 ~~~
 cd HRS2
 ./jp.sh  //Japanese
 ./en.sh  //English
+
 ~~~
+
+## トラブルシュート  
+
+1. GL-Serverの単体テスト  
+- Win側で起動
+- TCP port 8888を使用
+  - telnetで接続テスト
+
+2. cav8.jssの単体テスト
+- WSL側で起動
+- Websocket port 5000を使用
+
+3. TobiiStudy.pyの単体テスト  
+WindowsのPython3で動作します。ただしPythonファイルはWSLのHRS2を参照します。
+~~~
+python '\\wsl$\Ubuntu\home\ganka\HRS2\TobiiStudy\TobiiStudy.py'
+~~~
+
 ## 操作
 ~~~
 1. ブラウザーにて"localost/home.html"を開く

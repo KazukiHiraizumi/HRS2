@@ -2,8 +2,8 @@
 
 const WebSocket=require('ws');
 const ws=new WebSocket.Server({ port:5000 });
-ws.on('connection',function(client){
-	console.log("New connection");
+ws.on('connection',function(client,req){
+	console.log("New connection"+req.socket.remoteAddress);
 	client.on('message',function(msg){
 		console.log('received: %s', msg);
 		let obj=JSON.parse(msg);
@@ -51,9 +51,15 @@ Object.assign(ws,{
 	}
 });
 
-///////////////////////////////////////////////////////////////////////////////
-//Application Specific Codes are below
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////WSL URL converter/////////////////////
+function resolve(urlp){
+	let dn=urlp.split(':');
+	let adds=dn[0];
+	let port=dn.length>1? dn[1]:3000;
+        console.log('resolve '+adds+":"+port);
+	return {'adds':adds,'port':port}
+}
+/////////////////////Application Specific//////////////////
 const os = require('os');
 const dgram = require('dgram');
 const net = require( 'net' );
@@ -107,7 +113,8 @@ let program=[
 
 const gl_connect=function(){
   if(libs.glfw==null) libs.glfw=new net.Socket();
-  libs.glfw.connect( 8888, 'localhost', function(){
+  const urlp=resolve(ws.prm_glurl)
+  libs.glfw.connect( urlp.port,urlp.adds, function(){
     console.log( 'GL接続: ');
     program.forEach(function(prg){ prg.init(libs,ws,pub);});
   });
@@ -126,11 +133,10 @@ const gl_connect=function(){
 //  	let str=Buffer.from([pub.tpc_ext>>24,pub.tpc_ext>>16,pub.tpc_ext>>8,pub.tpc_ext]);
   	let str=Buffer.from(JSON.stringify(pub.tpc_ext));
   	let len=str.length;
-  	let dn=ws.prm_eturl.split(':');
-	  let url=dn[0];
-	  let port=dn.length>1? dn[1]:3000;
-	  let sock=dgram.createSocket('udp4');
-	  sock.send(str,0,len,port,url,function(err,bytes){
+	let eyetrk=resolve(ws.prm_eturl);
+	let sock=dgram.createSocket('udp4');
+	console.log('Tobii UDP send'+JSON.stringify(eyetrk));
+	sock.send(str,0,len,eyetrk.port,eyetrk.adds,function(err,bytes){
   		if(err) console.log('UDP error ');
   		else sock.close();
   	});
@@ -151,7 +157,7 @@ const gl_connect=function(){
 
 Object.assign(ws,{
 	prm_fps:60,prm_scndist:700,prm_scnwid:500,prm_resol:1920,prm_bg:0,prm_greyp:1,prm_greyn:0,prm_bin:false,prm_quan:false,prm_tm1:500,prm_tm2:100,prm_tm3:3000,prm_hz:10,prm_hzuni:'hz',prm_cpd:"1",prm_calcpd:3,prm_calcol:1,prm_mkcpd:1,prm_mkcol:1,prm_blwid:0.1,
-	prm_eturl:'localhost:3000',
+	prm_eturl:'localhost:3000',prm_glurl:'winhost:8888',
 	srv_abort:function(){
 		console.log('abort');
 		program.forEach(function(prg){
@@ -169,6 +175,7 @@ Object.assign(ws,{
 		libs.glfw.write('B 1 '+ws.prm_bg+'\n');
 	},
 	srv_run1:function(){
+//                console.log('RUN#1'+JSON.stringify(pub));
 		if(pub.tpc_wait==0) program[0].run(true);
 	},
 	srv_run2:function(){
