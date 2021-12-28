@@ -40,7 +40,7 @@ git clone https://github.com/KazukiHiraizumi/HRS2.git
 
 5. httpd
 ~~~
-sudo apt-get install lighttpd
+sudo apt install lighttpd
 ~~~
 "/etc/lighttpd/lighttpd.conf" を以下のように編集
 ~~~
@@ -54,16 +54,21 @@ serviceを登録
 ~~~
 sudo cp /usr/lib/systemd/system/lighttpd.service /var/run/
 ~~~
-これにてserviceで起動できるので後述のWinの**wsl**コマンドで起動する
-
+これにて以下のようにserviceとして起動できる。
+~~~
 sudo service lighttpd start
 ~~~
+Windows側からは**wsl**コマンドで起動できる。
+~~~
+wsl -u root -- service lighttpd start
+~~~
+serviceコマンドはroot権限が必要なので、通常のアカウントから起動するには、次のsudoers設定が必要である。
 
 6. sudoのパスワード省略
 ~~~
 sudo visudo
 ~~~
-以下を追加
+以下のコマンドを通常アカウントから起動できるようにする。
 ~~~
 <username> ALL=NOPASSWD: /sbin/service lighttpd start
 <username> ALL=NOPASSWD: /bin/tee -a /etc/hosts
@@ -71,29 +76,27 @@ sudo visudo
 teeコマンドは、resolve_hosts.sh(Winホストのアドレスを登録するコマンド)で必要です。
 
 7. Permission変更
-HRS2のOwner変更
+Ajaxでファイル書き込みできるように、パーミッションを変更します。
 ~~~
 sudo chown -R <user>:<group> HRS2
-~~~
-Permission変更
-~~~
 chmod 777 HRS2
 chmod 777 HRS2/setting*
 chmod 777 HRS2/html
 ~~~
 
 8. Windowsから起動  
-start.sh resolve_hosts.shを/usr/local/binへコピー
+Win側のwslコマンドで起動するため、start.shとresolve_hosts.shを/usr/local/binへコピー
 ~~~
 sudo cp start.sh resolve_hosts.sh /usr/local/bin
 ~~~
-以下の.batファイルにて一括起動します
+OKN.batファイルにて一括起動します
 ~~~
 @powershell -NoProfile -ExecutionPolicy Unrestricted "$s=[scriptblock]::create((gc \"%~f0\"|?{$_.readcount -gt 1})-join\"`n\");&$s" %*&goto:eof
 
 Start-Process "C:\Users\user\source\repos\KazukiHiraizumi\GL-Server\x64\Debug\GL-Server.exe"
 Start-Process python '\\wsl$\Ubuntu\home\ca\HRS2\TobiiStudy\TobiiStudy.py'
 wsl -u root -- service lighttpd start
+wsl -u root -e resolve_hosts.sh
 wsl -u ca -e start.sh
 ~~~
 
