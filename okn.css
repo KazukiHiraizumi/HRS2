@@ -21,7 +21,7 @@ iframe{
 	border: solid 1px red";
 }
 #contents{
-	width:33%;
+	width:25%;
 	float:left;
 	margin:0;
 	margin-top:10px;
@@ -93,7 +93,7 @@ iframe{
 
 #frame{
 	float:right;
-	width:60%;
+	width:65%;
 	margin:0;
 }
 
