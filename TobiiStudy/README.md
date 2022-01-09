@@ -1,6 +1,7 @@
-# Tobii
+# Tobii SDK (Python)
 
-## Install Tobii
+## Install Tobii  
+適合するPythonのバージョンは3.6のみです。
 ~~~
 python -m pip install -U pip setuptools 
 pip install tobii_research 
